@@ -18,7 +18,6 @@ type paramStoreApi interface {
 type ParamStore struct {
 	svc    paramStoreApi
 	ctx    context.Context
-	config *ParamStrConfig
 	token  *config.ParsedTokenConfig
 	logger hclog.Logger
 }
