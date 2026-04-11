@@ -13,11 +13,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-type implIface interface {
-	Value(token string, metadata []byte) (string, error)
-}
 type TokenStorePlugin struct {
-	impl implIface
+	impl tokenstore.TokenStore
 }
 
 func (ts TokenStorePlugin) Value(key string, metadata []byte) (string, error) {
@@ -29,20 +26,28 @@ var (
 	Revision string = "1111aaaa"
 )
 
-func main() {
-
-	versionFlag := flag.Bool("version", false, "plugin version")
-	flag.Parse()
-
-	if *versionFlag {
-		fmt.Printf("Version: %s-%s\n", Version, Revision)
-		os.Exit(0)
+func ShowFlag(osArgs []string) bool {
+	fs := flag.NewFlagSet("plugin", flag.ContinueOnError)
+	vf := fs.Bool("version", false, "plugin version")
+	if err := fs.Parse(osArgs); err != nil {
+		return false
 	}
+
+	if *vf {
+		fmt.Printf("Version: %s-%s\n", Version, Revision)
+		return true
+	}
+	return false
+}
+
+func PluginSetup() (*impl.ParamStore, error) {
 
 	// log set up
 	log := hclog.New(hclog.DefaultOptions)
+
 	log.SetLevel(hclog.LevelFromString("error"))
 
+	os.Environ()
 	if val, ok := os.LookupEnv(config.CONFIGMANAGER_LOG); ok && len(val) > 0 {
 		if logLevel := hclog.LevelFromString(val); logLevel != hclog.NoLevel {
 			log.SetLevel(logLevel)
@@ -52,7 +57,22 @@ func main() {
 	// initialize the implementation
 	i, err := impl.NewParamStore(context.Background(), log)
 	if err != nil {
-		log.Error("error", err)
+		log.Error("implementation init error", err, "impl", "awsparamstr")
+		return nil, err
+	}
+
+	return i, nil
+}
+
+// main func should only be used for process terminantion
+// Inits and serves the plugin
+func main() {
+	if ShowFlag(os.Args[1:]) {
+		os.Exit(0)
+	}
+
+	i, err := PluginSetup()
+	if err != nil {
 		os.Exit(1)
 	}
 
@@ -64,6 +84,7 @@ func main() {
 		Plugins: map[string]plugin.Plugin{
 			"configmanager_token_store": &tokenstore.GRPCPlugin{Impl: ts},
 		},
+		//
 		VersionedPlugins: map[int]plugin.PluginSet{
 			1: {
 				"configmanager_token_store": &tokenstore.GRPCPlugin{Impl: ts},
