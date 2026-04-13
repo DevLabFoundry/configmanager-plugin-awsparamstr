@@ -89,7 +89,7 @@ tasks:
     context: bash
     command:
       - |
-        sed -i 's|github.com/DevLabFoundry/configmanager/v3/||g' .coverage/out
+        sed -i 's|github.com/DevLabFoundry/configmanager-plugin-awsparamstr||g' .coverage/out
         echo "Coverage file first 20 lines after conversion:"
         head -20 .coverage/out
         echo "Coverage file line count:"
