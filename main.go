@@ -21,6 +21,8 @@ func (ts TokenStorePlugin) Value(key string, metadata []byte) (string, error) {
 	return ts.impl.Value(key, metadata)
 }
 
+const PluginName string = "AWSParamStr"
+
 var (
 	Version  string = "0.0.1"
 	Revision string = "1111aaaa"
@@ -34,7 +36,7 @@ func ShowFlag(osArgs []string) bool {
 	}
 
 	if *vf {
-		fmt.Printf("Version: %s-%s\n", Version, Revision)
+		fmt.Printf("Configmanager Plugin (%s) Version: %s-%s\n", PluginName, Version, Revision)
 		return true
 	}
 	return false
